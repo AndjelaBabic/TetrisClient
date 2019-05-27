@@ -1,5 +1,11 @@
 package tetris.form;
 
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.TextInputDialog;
+import javafx.scene.layout.TilePane;
 import tetris.block.Tetromino;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
@@ -17,11 +23,15 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import sun.security.pkcs11.wrapper.Constants;
 import tetris.controller.Controller;
+import tetris.controller.ResultsController;
 import tetris.session.Session;
 
+import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 
 public class Tetris extends Application {
 
@@ -36,14 +46,16 @@ public class Tetris extends Application {
     private static boolean game = true;
 
     private static Pane group = new Pane();
+    private static Pane resultsPane = new Pane();
 
     private static Scene scene = new Scene(group, XMAX + 150, YMAX);
+    private static Scene sceneResult = new Scene(resultsPane, XMAX + 150, YMAX);
     /**
-     *  Represent current block
+     * Represent current block
      */
     private static Tetromino object;
     /**
-     *  Represent next block
+     * Represent next block
      */
     private static Tetromino nextObj;
 
@@ -82,25 +94,58 @@ public class Tetris extends Application {
         primaryStage.getIcons().add(new Image("file:tetris.png"));
         primaryStage.show();
 
+
+        /*okButton.addEventFilter(KeyEvent.KEY_PRESSED,
+                event -> {
+                    String name = textInputDialog.getDefaultValue();
+                    System.out.println(name);
+                    textInputDialog.hide();
+                    primaryStage.setScene(sceneResult);
+                });*/
+
+
         // Timer
         Timeline timer = new Timeline(new KeyFrame(Duration.millis(500), ev -> {
+
             if (object.a.getY() == 0 || object.b.getY() == 0 || object.c.getY() == 0 || object.d.getY() == 0) {
                 time++;
             } else {
                 time = 0;
             }
             // for the 2 seconds the block is on the top
-            if (time == 2) {
+            if (time == 4) {
                 Text over = new Text("Game over");
                 over.setFill(Color.RED);
                 over.setStyle("-fx-font: 70 arial;");
-                over.setY(250);
+                over.setY(350);
                 over.setX(10);
                 group.getChildren().add(over);
                 game = false;
             }
-            if (time == 15) {
-                System.exit(0);
+            if (time == 5) {
+                TextInputDialog textInputDialog = new TextInputDialog();
+                textInputDialog.setHeaderText("Input your name");
+                textInputDialog.setContentText("Name: ");
+
+                textInputDialog.show();
+
+                textInputDialog.setOnHidden(event -> {
+
+                    String name = textInputDialog.getResult();
+                    System.out.println(textInputDialog.getResult());
+                    Controller.insertResult(name, score);
+                    textInputDialog.hide();
+                    try {
+                        ResultsController resultsController = new ResultsController();
+                        resultsController.changeScreen(primaryStage);
+
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    //primaryStage.setScene(sceneResult);
+                    //primaryStage.setTitle("TOP LIST");
+                });
+
             }
 
             if (game) {
@@ -136,19 +181,28 @@ public class Tetris extends Application {
         });
     }
 
+
+    private boolean isValid(String defaultValue) {
+        if (defaultValue == null || defaultValue.isEmpty()) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
     private void moveToBottom(Tetromino block) {
     }
 
-    private void moveDown(Tetromino block){
+    private void moveDown(Tetromino block) {
         // moved down is true if the block is still moving
         boolean movingDown = Controller.moveDown(block);
-        if(!movingDown){
+        if (!movingDown) {
             int rowsToRemove = Controller.removeRows(group);
             score += rowsToRemove * 50;
             linesNo += rowsToRemove;
             try {
                 object = nextObj;
-                if(Controller.checkBoundries(object)){
+                if (Controller.checkBoundries(object)) {
                     moveOnKeyPressed(object);
                     group.getChildren().addAll(object.a, object.b, object.c, object.d);
                 }
@@ -157,6 +211,13 @@ public class Tetris extends Application {
                 e.printStackTrace();
             }
         }
+    }
+
+    public void changeScreen(ActionEvent event) throws IOException {
+        Parent root = FXMLLoader.load(getClass().getResource("results.fxml"));
+
+        Scene scene = new Scene(root);
+
     }
 
 

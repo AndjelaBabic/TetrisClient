@@ -1,6 +1,6 @@
 package tetris;
 
-import domain.Rect;
+import model.Rect;
 import javafx.scene.Node;
 import javafx.scene.layout.Pane;
 import javafx.scene.shape.Rectangle;
